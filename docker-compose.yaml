@@ -1,0 +1,51 @@
+# Use postgres/example user/password credentials
+# this container will create a postgresql with userprofile as DB and railway schema (init.sql)
+version: '3.1'
+services:
+  db_local:
+    image: postgres:11.2-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: bakery
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bakery
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    container_name: db_local
+    #volumes:
+    #  - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  db_admin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user@example.com
+      PGADMIN_DEFAULT_PASSWORD: secret
+    ports:
+      - "1234:80"
+    depends_on:
+      - db_local
+
+  bakery-backend:
+    image: bakery-backend:latest
+    restart: always
+    depends_on:
+      - db_local
+    environment:
+      DB_HOST: db_local
+      DB_USER: bakery
+      DB_PASS: password
+      DB_SCHEMA: bakery
+    ports:
+      - "5000:5000"
+    container_name: backend
+
+  bakery-frontend:
+    image: bakery-frontend:latest
+    #restart: always
+    depends_on:
+      - bakery-backend
+    ports:
+      - "3000:3000/tcp"
+    container_name: frontend
